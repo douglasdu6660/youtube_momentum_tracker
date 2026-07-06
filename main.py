@@ -94,9 +94,11 @@ def search_by_keyword(keyword, max_results=50):
             videos[item["id"]]["published"] = item["snippet"]["publishedAt"]
             videos[item["id"]]["duration"] = item["contentDetails"]["duration"]
 
+    # set up channel query
     channel_ids = list({
         video["channel_id"] for video in videos.values()
     })
+    # get channels
     r = requests.get(
         "https://www.googleapis.com/youtube/v3/channels",
         params={
@@ -106,14 +108,14 @@ def search_by_keyword(keyword, max_results=50):
         }
     )
     
+    channel_subs = {}
     if r.status_code == 200:
         data = r.json()
         for item in data["items"]:
             channel_id = item["id"]
-            subscribers = int(item["statistics"].get("subscriberCount", 1))
-            for video in videos.values(): # individual video in videos dict
-                if video["channel_id"] == channel_id:
-                    video["subscribers"] = max(subscribers, 1)
+            channel_subs[channel_id] = int(item["statistics"].get("subscriberCount", 1))
+        for video in videos.values(): # individual video in videos dict
+            video["subscribers"] = channel_subs[video["channel_id"]] # assign subscriber count to video dict
 
     # filter out shorts
     videos = { 
