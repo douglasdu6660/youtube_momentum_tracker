@@ -1,6 +1,3 @@
-
-
-
 import scoring
 import youtube_api
 
