@@ -5,9 +5,6 @@ import isodate
 
 from config import API_KEY
 
-API_KEY = "YOUR_API"
-key = API_KEY
-
 MIN_DURATION = 300
 
 
@@ -75,6 +72,9 @@ def search_by_keyword(keyword, max_results=50):
                 "published": None,
                 "subscribers": None
             }
+    else:
+        print(f"Error: {r.status_code} - {r.text}")
+        return {}
 
     # get video details 
     r = requests.get(
@@ -93,7 +93,10 @@ def search_by_keyword(keyword, max_results=50):
             videos[item["id"]]["views"] = int(item["statistics"]["viewCount"])
             videos[item["id"]]["published"] = item["snippet"]["publishedAt"]
             videos[item["id"]]["duration"] = item["contentDetails"]["duration"]
-
+    else:
+        print(f"Error: {r.status_code} - {r.text}")
+        return {}
+    
     # set up channel query
     channel_ids = list({
         video["channel_id"] for video in videos.values()
@@ -116,7 +119,10 @@ def search_by_keyword(keyword, max_results=50):
             channel_subs[channel_id] = int(item["statistics"].get("subscriberCount", 1))
         for video in videos.values(): # individual video in videos dict
             video["subscribers"] = channel_subs[video["channel_id"]] # assign subscriber count to video dict
-
+    else:
+        print(f"Error: {r.status_code} - {r.text}")
+        return {}
+    
     # filter out shorts
     videos = { 
         video_id:video 
