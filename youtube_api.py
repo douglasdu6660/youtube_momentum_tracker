@@ -6,6 +6,20 @@ from config import API_KEY
 
 MIN_DURATION = 300
 
+def search_by_id(video_ids):
+    # accept singular id or comma separated string
+    # get video details 
+    r = requests.get(
+        "https://www.googleapis.com/youtube/v3/videos",
+        params={
+            "part": "statistics,snippet,contentDetails",
+            "id": video_ids,
+            "key": API_KEY
+        }
+    )
+    
+    return r
+
 def search_by_keyword(keyword, max_results=50):
     # call youtube api to get videos by keyword
     videos = {}
@@ -56,15 +70,8 @@ def search_by_keyword(keyword, max_results=50):
         print(f"Error: {r.status_code} - {r.text}")
         return {}
 
-    # get video details 
-    r = requests.get(
-        "https://www.googleapis.com/youtube/v3/videos",
-        params={
-            "part": "statistics,snippet,contentDetails",
-            "id": ",".join(videos.keys()),
-            "key": API_KEY
-        }
-    )
+    video_ids = ",".join(videos.keys()) # comma separated string of video ids
+    r = search_by_id(video_ids)
 
     if r.status_code == 200:
         data = r.json()
