@@ -6,7 +6,9 @@ from config import API_KEY
 
 MIN_DURATION = 300
 
-def search_by_id(video_ids):
+def search_by_id(video_ids, videos=None):
+    if videos is None:
+        videos = {}
     # accept singular id or comma separated string
     # get video details 
     r = requests.get(
@@ -17,8 +19,29 @@ def search_by_id(video_ids):
             "key": API_KEY
         }
     )
-    
-    return r
+
+    if r.status_code == 200:
+        data = r.json()
+        for item in data["items"]:
+            if item["id"] not in videos: # no video item is created yet
+                videos[item["id"]] = { # create a new video item
+                    "channel_id": item["snippet"]["channelId"],
+                    "title": item["snippet"]["title"],
+                    "url": f"https://www.youtube.com/watch?v={item['id']}",
+                    "views": None,
+                    "duration": None,
+                    "published": None,
+                    "subscribers": 0
+                }
+            # dict assignment by video id (item["id"])
+            videos[item["id"]]["views"] = int(item["statistics"]["viewCount"])
+            videos[item["id"]]["published"] = item["snippet"]["publishedAt"]
+            videos[item["id"]]["duration"] = item["contentDetails"]["duration"]
+    else:
+        print(f"Error: {r.status_code} - {r.text}")
+        return {}
+
+    return videos
 
 def search_by_keyword(keyword, max_results=50):
     # call youtube api to get videos by keyword
@@ -71,18 +94,7 @@ def search_by_keyword(keyword, max_results=50):
         return {}
 
     video_ids = ",".join(videos.keys()) # comma separated string of video ids
-    r = search_by_id(video_ids)
-
-    if r.status_code == 200:
-        data = r.json()
-        for item in data["items"]:
-            # dict assignment by video id (item["id"])
-            videos[item["id"]]["views"] = int(item["statistics"]["viewCount"])
-            videos[item["id"]]["published"] = item["snippet"]["publishedAt"]
-            videos[item["id"]]["duration"] = item["contentDetails"]["duration"]
-    else:
-        print(f"Error: {r.status_code} - {r.text}")
-        return {}
+    videos = search_by_id(video_ids, videos)
     
     # set up channel query
     channel_ids = list({

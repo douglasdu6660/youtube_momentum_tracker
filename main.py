@@ -1,3 +1,4 @@
+import reverse_search
 import scoring
 import youtube_api
 
@@ -5,8 +6,21 @@ def get_top_videos(sorted_videos, n=10):
     return sorted_videos[:n]
 
 def main():
-    keyword = input("Enter a keyword to search for videos: ")
-    videos = youtube_api.search_by_keyword(keyword)
+    mode = input("Enter '1' to search by keyword or '2' to search by video URL: ")
+    if mode == "1":
+        keyword = input("Enter a keyword to search for videos: ")
+        videos = youtube_api.search_by_keyword(keyword)
+    elif mode == "2":
+        url = input("Enter a YouTube video URL: ")
+        video_id = reverse_search.parse_url(url)
+        if not video_id:
+            print("Invalid YouTube URL")
+            return
+        videos = youtube_api.search_by_id(video_id)
+    else:
+        print("Invalid mode")
+        return
+
     # momentum
     scoring.get_momentum(videos)
     sorted_videos = sorted(
