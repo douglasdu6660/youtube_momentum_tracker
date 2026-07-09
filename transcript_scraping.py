@@ -11,24 +11,38 @@ def get_transcript(video_id):
         print(f"Error fetching transcript for video ID {video_id}: {e}")
         return None
     
-def get_frequent_words(transcript, n=20):
+def get_frequent_words(transcript, diversity=0, ngram=1, n=20):
     if transcript:
+        # turn to string
         full_text = " ".join(
             snippet.text
             for snippet in transcript
         )
         
         kw_model = KeyBERT()
-        keywords = kw_model.extract_keywords(
-            full_text,
-            top_n=n
-        )
-        for word, score in keywords:
-            print(word, score)
+        if ngram > 1:
+            keywords1 = kw_model.extract_keywords(
+                full_text,
+                keyphrase_ngram_range=(1, 1), # force unigram first since multigrams domnianate
+                use_mmr=True,
+                diversity=diversity, # diversify keywords
+                top_n=n//2
+            )
+
+            keywords2 = kw_model.extract_keywords(
+                full_text,
+                keyphrase_ngram_range=(ngram, ngram), # ngram
+                use_mmr=True,
+                diversity=diversity, # diversify keywords
+                top_n=n//2
+            )
+            
+            keywords = keywords1 + keywords2 # join
+            keywords.sort(key=lambda x: x[1], reverse=True)
 
     else:
         print("No transcript available to process.")
 
 def try_transcript(video_id):
     transcript = get_transcript(video_id)
-    get_frequent_words(transcript)
+    get_frequent_words(transcript, 0.4, 2)
