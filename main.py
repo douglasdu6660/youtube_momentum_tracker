@@ -1,6 +1,7 @@
 import reverse_search
 import scoring
 import youtube_api
+import transcript_scraping
 
 def get_top_videos(sorted_videos, n=10):
     return sorted_videos[:n]
@@ -17,6 +18,7 @@ def main():
             print("Invalid YouTube URL")
             return
         videos = youtube_api.search_by_id(video_id)
+        transcript_scraping.try_transcript(video_id)
     else:
         print("Invalid mode")
         return
