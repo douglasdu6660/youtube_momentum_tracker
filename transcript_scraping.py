@@ -15,12 +15,13 @@ def get_frequent_words(transcript, diversity=0, ngram=1, n=20):
     if transcript:
         # turn to string
         full_text = " ".join(
-            snippet.text
+            snippet.get('text', '') if isinstance(snippet, dict) else getattr(snippet, 'text', '')
             for snippet in transcript
         )
         
         kw_model = KeyBERT()
         if ngram > 1:
+            # mix unigrams with multigrams to diversify results
             keywords1 = kw_model.extract_keywords(
                 full_text,
                 keyphrase_ngram_range=(1, 1), # force unigram first since multigrams domnianate
@@ -39,6 +40,10 @@ def get_frequent_words(transcript, diversity=0, ngram=1, n=20):
             
             keywords = keywords1 + keywords2 # join
             keywords.sort(key=lambda x: x[1], reverse=True)
+
+            for word, score in keywords:
+                print(word, score)
+
 
     else:
         print("No transcript available to process.")
