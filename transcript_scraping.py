@@ -1,5 +1,7 @@
 from youtube_transcript_api import YouTubeTranscriptApi
 from keybert import KeyBERT
+import spacy
+import keyword_spacy
 
 def get_transcript(video_id):
     try:
@@ -19,27 +21,41 @@ def get_frequent_words(transcript, diversity=0, ngram=1, n=20):
             for snippet in transcript
         )
         
+        nlp = spacy.load("en_core_web_md")
+        nlp.add_pipe(
+            "keyword_extractor",
+            last=True,
+            config={"top_n": 10, "min_ngram": 3, "max_ngram": 3, "strict": True}
+        )
+
+        doc = nlp(full_text)
+
+        candidates = []
+        for chunk in doc.noun_chunks:
+            valid_tokens = [token for token in chunk if token.pos_ in {"NOUN", "PROPN", "ADJ"} 
+                            and not token.is_stop and not token.is_punct]
+            if valid_tokens:
+                if len(valid_tokens) == 1:
+                    lemma_word = valid_tokens[0].lemma_.lower()
+                    candidates.append(lemma_word)
+                else:
+                    phrase = " ".join([token.text.lower() for token in valid_tokens])
+                    candidates.append(" ".join(phrase))
+            
+        candidates = list(set([c for c in candidates if len(c.strip()) > 1]))
+        
+        print("Top Keywords:", doc._.keywords)
+
         kw_model = KeyBERT()
         if ngram > 1:
             # mix unigrams with multigrams to diversify results
-            keywords1 = kw_model.extract_keywords(
+            keywords = kw_model.extract_keywords(
                 full_text,
-                keyphrase_ngram_range=(1, 1), # force unigram first since multigrams domnianate
+                candidates=candidates,
                 use_mmr=True,
                 diversity=diversity, # diversify keywords
-                top_n=n//2
+                top_n=n
             )
-
-            keywords2 = kw_model.extract_keywords(
-                full_text,
-                keyphrase_ngram_range=(ngram, ngram), # ngram
-                use_mmr=True,
-                diversity=diversity, # diversify keywords
-                top_n=n//2
-            )
-            
-            keywords = keywords1 + keywords2 # join
-            keywords.sort(key=lambda x: x[1], reverse=True)
 
             for word, score in keywords:
                 print(word, score)
