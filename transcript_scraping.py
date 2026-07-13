@@ -43,8 +43,6 @@ def get_frequent_words(transcript, diversity=0, ngram=1, n=20):
                     candidates.append(" ".join(phrase))
             
         candidates = list(set([c for c in candidates if len(c.strip()) > 1]))
-        
-        print("Top Keywords:", doc._.keywords)
 
         kw_model = KeyBERT()
         if ngram > 1:
@@ -59,7 +57,6 @@ def get_frequent_words(transcript, diversity=0, ngram=1, n=20):
 
             for word, score in keywords:
                 print(word, score)
-
 
     else:
         print("No transcript available to process.")
