@@ -18,7 +18,7 @@ def main():
             print("Invalid YouTube URL")
             return
         videos = youtube_api.search_by_id(video_id)
-        transcript_scraping.try_transcript(video_id)
+        transcript_scraping.try_transcript(video_id, videos[video_id]["description"])
     else:
         print("Invalid mode")
         return
@@ -41,6 +41,7 @@ def main():
         print(f"   Age (days):    {video['age_days']}")
         print(f"   Burst:         {video['burst']:.4f}")
         print(f"   Overperform:   {video['overperform']:.4f}")
+        print(f"   Description:   {video['description']}")
         print(f"   URL:           {video['url']}")
         print()
 

@@ -28,12 +28,14 @@ def search_by_id(video_ids, videos=None):
                     "channel_id": item["snippet"]["channelId"],
                     "title": item["snippet"]["title"],
                     "url": f"https://www.youtube.com/watch?v={item['id']}",
+                    "description": "",
                     "views": None,
                     "duration": None,
                     "published": None,
                     "subscribers": 0
                 }
             # dict assignment by video id (item["id"])
+            videos[item["id"]]["description"] = item["snippet"].get("description") # .get is safer since descriptions may be epmty
             videos[item["id"]]["views"] = int(item["statistics"]["viewCount"])
             videos[item["id"]]["published"] = item["snippet"]["publishedAt"]
             videos[item["id"]]["duration"] = item["contentDetails"]["duration"]
