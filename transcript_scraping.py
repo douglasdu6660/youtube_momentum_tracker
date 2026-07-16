@@ -2,6 +2,8 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from keybert import KeyBERT
 import spacy
 import keyword_spacy
+import re
+
 
 def get_transcript(video_id):
     try:
@@ -17,7 +19,14 @@ def get_transcript(video_id):
     except Exception as e:
         print(f"Error fetching transcript for video ID {video_id}: {e}")
         return None
-    
+
+def strip_hashtags(text):
+    if text:
+        pattern = r"(?:^|\s)#\w+" # start of line or after white space, find continuous alphabetical character after hashtag
+        clean_text = re.sub(pattern, " ", text) # substitute found hashtags with white space
+        
+        return re.sub(r'\s+', ' ', clean_text).strip() # substitute continuous white space with singular white space
+
 def get_keywords(transcript, diversity=0.5, n=20):
     if transcript:
         nlp = spacy.load("en_core_web_md")
@@ -44,7 +53,7 @@ def get_keywords(transcript, diversity=0.5, n=20):
                     candidates.append(lemma_word)
                 else:
                     phrase = " ".join([token.text.lower() for token in valid_tokens]) # tokenize phrase as 1
-                    candidates.append(" ".join(phrase))
+                    candidates.append(phrase)
             
         candidates = list(set([c for c in candidates if len(c.strip()) > 1])) # dedupe
 
@@ -55,7 +64,7 @@ def get_keywords(transcript, diversity=0.5, n=20):
             use_mmr=True,
             diversity=diversity, # diversify keywords
             top_n=n,
-            keyphrase_ngram_range=(1, 1) # apparently, keybert doesn't know ngrams are disabled, this disables it mannually to prevent time waste
+            keyphrase_ngram_range=(1, 3)
         )
 
         for word, score in keywords:
@@ -65,5 +74,5 @@ def get_keywords(transcript, diversity=0.5, n=20):
         print("No transcript available to process.")
 
 def try_transcript(video_id, description):
-    all_text = f"{get_transcript(video_id)}\n\n{description}"
+    all_text = f"{get_transcript(video_id)}\n\n{strip_hashtags(description)}"
     get_keywords(all_text)
